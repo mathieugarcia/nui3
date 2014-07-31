@@ -394,11 +394,17 @@ void nuiContainer::DrawChild(nuiDrawContext* pContext, nuiWidget* pChild)
 {  
   CheckValid();
   float x,y;
-  pContext->PushMatrix();
 
   x = (float)pChild->GetRect().mLeft;
   y = (float)pChild->GetRect().mTop;
-  pContext->Translate( x, y );
+  
+  bool matrixchanged = false;
+  if (x != 0 || y != 0)
+  {
+    pContext->PushMatrix();
+    pContext->Translate( x, y );
+    matrixchanged = true;
+  }
 
   nuiPainter* pPainter = pContext->GetPainter();
   if (mpSavedPainter)
@@ -415,8 +421,11 @@ void nuiContainer::DrawChild(nuiDrawContext* pContext, nuiWidget* pChild)
     if (pMetaPainter)
       pMetaPainter->DrawChild(pContext, pChild);
   }
-
-  pContext->PopMatrix();
+  
+  if (matrixchanged)
+  {
+    pContext->PopMatrix();
+  }
 }
 
 ////// Private event management:
