@@ -8,7 +8,7 @@
 #include "nui.h"
 
 #define SCROLL_SIZE 12.0f
-#define NUI_SMOOTH_SCROLL_RATIO (0.2f/2.f)
+#define NUI_SMOOTH_SCROLL_RATIO 0.2//(0.2f/2.f)
 #define HIDE_SCROLLBARS_DELAY 0.6
 //#define INERTIA_SPEED 2400
 #define INERTIA_SPEED 0.8
@@ -68,7 +68,7 @@ void nuiScrollView::Init(nuiScrollBar* pHorizontalScrollBar, nuiScrollBar* pVert
   mHIncrement = 64.f;
   mCanRespectConstraint = true;
 
-  mSmoothScrolling = false;
+  mSmoothScrolling = true;
   mXOffset = 0;
   mYOffset = 0;
   mSpeedX = 0;
