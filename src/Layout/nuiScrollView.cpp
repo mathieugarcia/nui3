@@ -837,7 +837,7 @@ bool nuiScrollView::MouseUnclicked(const nglMouseInfo& rInfo)
   {
     nglTime now;
     double elapsed = now.GetValue() - mLastTime.GetValue();
-    if (elapsed > 0.5)
+    if (elapsed > 0.1)
     {
       mSpeedX = 0;
       mSpeedY = 0;
@@ -1019,7 +1019,7 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
 //  if (mYOffset < 0)
 //    mSpeedY += -mYOffset * SPRING_K;
 
-  const float MINSPEED = 0.1;
+  const float MINSPEED = 1;
   if (fabs(mSpeedX) < MINSPEED)
     mSpeedX = 0;
 
@@ -1031,21 +1031,35 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
 
   if (!mLeftClick)
   {
+    mTimerOn = false;
+
     float XOffset = (float)mpHorizontal->GetRange().GetValue();
     float YOffset = (float)mpVertical->GetRange().GetValue();
 
     float xdiff = XOffset - mXOffset;
     float ydiff = YOffset - mYOffset;
 
-//    if (xdiff > 2 || xdiff < -2)
+    if (::fabs(xdiff) < 1)
+    {
+      xdiff = 0;
+      mXOffset = XOffset;
+    }
+    else
+    {
       mXOffset += xdiff * NUI_SMOOTH_SCROLL_RATIO;
-//    else
-//      mXOffset = XOffset;
-
-//    if (ydiff > 2 || ydiff < -2)
+      mTimerOn = true;
+    }
+    
+    if (::fabs(ydiff) < 1)
+    {
+      ydiff = 0;
+      mYOffset = YOffset;
+    }
+    else
+    {
       mYOffset += ydiff * NUI_SMOOTH_SCROLL_RATIO;
-//    else
-//      mYOffset = YOffset;
+      mTimerOn = true;
+    }
 
     if (mSpeedX != 0)
     {
@@ -1315,9 +1329,13 @@ bool nuiScrollView::PreMouseClicked(const nglMouseInfo& rInfo)
     {
       if (StealMouseEvent(rInfo))
       {
+        mTimerOn = false;
+        mSpeedX = 0;
+        mSpeedY = 0;
+        
         mTouched = false;
-        mXOffset = GetXPos();
-        mYOffset = GetYPos();
+        SetXPos(mXOffset);
+        SetYPos(mYOffset);
         mClickValueH = mXOffset;
         mClickValueV = mYOffset;
 
