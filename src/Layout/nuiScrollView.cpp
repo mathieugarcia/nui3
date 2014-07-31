@@ -13,7 +13,7 @@
 //#define INERTIA_SPEED 2400
 #define INERTIA_SPEED 0.8
 #define INITIAL_BRAKES 0.5
-#define INERTIA_BRAKES 0.95
+#define INERTIA_BRAKES 0.98
 #define EXTRA_OUT_SIZE_RATIO 0.5
 
 #ifdef DEBUG
@@ -68,7 +68,7 @@ void nuiScrollView::Init(nuiScrollBar* pHorizontalScrollBar, nuiScrollBar* pVert
   mHIncrement = 64.f;
   mCanRespectConstraint = true;
 
-  mSmoothScrolling = true;
+  mSmoothScrolling = false;
   mXOffset = 0;
   mYOffset = 0;
   mSpeedX = 0;
@@ -1019,7 +1019,7 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
 //  if (mYOffset < 0)
 //    mSpeedY += -mYOffset * SPRING_K;
 
-  const float MINSPEED = 1;
+  const float MINSPEED = 0.1f;
   if (fabs(mSpeedX) < MINSPEED)
     mSpeedX = 0;
 
@@ -1039,6 +1039,7 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
     float xdiff = XOffset - mXOffset;
     float ydiff = YOffset - mYOffset;
 
+//    printf("Timer: y diff: %.4f\tCurrent Pos: %.4f\tSpeed Y: %.4f\n", ydiff, mYOffset, mSpeedY);
     if (::fabs(xdiff) < 1)
     {
       xdiff = 0;
@@ -1046,10 +1047,12 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
     }
     else
     {
-      mXOffset += xdiff * NUI_SMOOTH_SCROLL_RATIO;
+      if (mSmoothScrolling)
+        xdiff *= NUI_SMOOTH_SCROLL_RATIO;
       mTimerOn = true;
     }
-    
+    mXOffset += xdiff;
+
     if (::fabs(ydiff) < 1)
     {
       ydiff = 0;
@@ -1057,9 +1060,12 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
     }
     else
     {
-      mYOffset += ydiff * NUI_SMOOTH_SCROLL_RATIO;
+      if (mSmoothScrolling)
+        ydiff *= NUI_SMOOTH_SCROLL_RATIO;
       mTimerOn = true;
     }
+
+    mYOffset += ydiff;
 
     if (mSpeedX != 0)
     {
