@@ -57,14 +57,12 @@ void nuiContainer::CallOnTrash()
 void nuiContainer::ChildrenCallOnTrash()
 {
   CheckValid();
-  IteratorPtr pIt;
-  for (pIt = GetFirstChild(false); pIt && pIt->IsValid(); GetNextChild(pIt))
+  while (GetChildrenCount() > 0)
   {
-    nuiWidgetPtr pItem = pIt->GetWidget();
+    nuiWidgetPtr pItem = GetChild(0);
     if (pItem)
-      pItem->CallOnTrash();
+      pItem->Trash();
   }
-  delete pIt;  
 }
 
 nuiContainerPtr nuiContainer::GetRoot() const
@@ -396,17 +394,11 @@ void nuiContainer::DrawChild(nuiDrawContext* pContext, nuiWidget* pChild)
 {  
   CheckValid();
   float x,y;
+  pContext->PushMatrix();
 
   x = (float)pChild->GetRect().mLeft;
   y = (float)pChild->GetRect().mTop;
-
-  bool matrixchanged = false;
-  if (x != 0 || y != 0)
-  {
-    pContext->PushMatrix();
-    pContext->Translate( x, y );
-    matrixchanged = true;
-  }
+  pContext->Translate( x, y );
 
   nuiPainter* pPainter = pContext->GetPainter();
   if (mpSavedPainter)
@@ -424,10 +416,7 @@ void nuiContainer::DrawChild(nuiDrawContext* pContext, nuiWidget* pChild)
       pMetaPainter->DrawChild(pContext, pChild);
   }
 
-  if (matrixchanged)
-  {
-    pContext->PopMatrix();
-  }
+  pContext->PopMatrix();
 }
 
 ////// Private event management:

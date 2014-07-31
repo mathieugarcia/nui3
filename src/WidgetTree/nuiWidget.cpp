@@ -658,6 +658,7 @@ nuiWidget::~nuiWidget()
   StopAutoDraw();
   ClearAnimations();
 
+  NGL_ASSERT(IsTrashed(false));
   nuiTopLevel* pRoot = GetTopLevel();
   if (pRoot)
     pRoot->AdviseObjectDeath(this);
@@ -733,7 +734,6 @@ nuiContainerPtr nuiWidget::GetRoot() const
 bool nuiWidget::SetParent(nuiContainerPtr pParent)
 {
   CheckValid();
-  NGL_ASSERT(!IsTrashed(false));
   bool res = true;
 
   nuiTopLevel* pRoot = GetTopLevel();
@@ -742,7 +742,8 @@ bool nuiWidget::SetParent(nuiContainerPtr pParent)
     pRoot->ReleaseToolTip(this);
     if (!pParent) // If we used to be connected to a root but the current parenting changes that: tell the trunk of the tree about it!
     {
-      pRoot->AdviseSubTreeDeath(this);
+      NGL_ASSERT(IsTrashed(false));
+//      pRoot->AdviseSubTreeDeath(this); ///< AdviseObjectDeath will be called for every child by CallOnTrash
       CallDisconnectTopLevel(pRoot);
     }
   }
@@ -2200,14 +2201,18 @@ void nuiWidget::CallOnTrash()
   CheckValid();
   mTrashed = true;
 
-  while (!mHotKeyEvents.empty())
-  {
-    DelHotKey(mHotKeyEvents.begin()->first);
-  }
-
   nuiTopLevel* pRoot = GetTopLevel();
   if (pRoot)
   {
+    while (!mHotKeyEvents.empty())
+    {
+//      DelHotKey(mHotKeyEvents.begin()->first);
+//    }
+      pRoot->DelHotKey(mHotKeyEvents.begin()->first);
+      mHotKeyEvents.erase(mHotKeyEvents.begin()->first);
+    }
+    SetWantKeyboardFocus(false);
+
     //NGL_OUT(_T("nuiWidget OnTrash [0x%x '%s']\n"), this, GetObjectClass().GetChars());
     pRoot->AdviseObjectDeath(this);
   }
@@ -2864,7 +2869,49 @@ bool nuiWidget::ReleaseToolTip(nuiWidgetPtr pWidget)
 }
 
 
-/// Drag
+//////////////////
+// User tooltip //
+//////////////////
+#pragma mark -
+#pragma mark User tooltip
+
+///< Tell the system to display the tooltip widget, activated by 'pCallerWidget'
+bool nuiWidget::ActivateUserToolTip(nuiWidgetPtr pTooltipWidget)
+{
+  CheckValid();
+  
+  nuiTopLevelPtr pRoot = GetTopLevel();
+  NGL_ASSERT(pRoot);
+  
+  if (pRoot)
+  {
+    return pRoot->ActivateUserToolTip(this, pTooltipWidget);
+  }
+  
+  return false;
+}
+
+///< Tell the system to stop displaying the tooltip widget, that was activated by 'pCallerWidget'.
+bool nuiWidget::ReleaseUserToolTip()
+{
+  CheckValid();
+  
+  nuiTopLevelPtr pRoot = GetTopLevel();
+  NGL_ASSERT(pRoot);
+  if (pRoot)
+  {
+    bool res = pRoot->ReleaseUserToolTip(true); // Widget will be trashed by top level
+    return res;
+  }
+  return false;
+}
+
+
+//////////
+// Drag //
+//////////
+#pragma mark -
+#pragma mark Drag
 bool nuiWidget::Drag(nglDragAndDrop* pDragObj)
 {
   CheckValid();

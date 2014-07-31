@@ -93,6 +93,13 @@ public:
   virtual bool ReleaseToolTip(nuiWidgetPtr pWidget) { return false; } ///< Remove the current tool-tip for the given widget.
 #endif
   //@}
+  
+  /** @name User tooltips */
+  //@{
+  ///< Tells the system to display the user tooltip widget 'pTooltipWidget', held by 'pHolderWidget'
+  virtual bool ActivateUserToolTip(nuiWidgetPtr pHolderWidget, nuiWidgetPtr pTooltipWidget);
+  virtual bool ReleaseUserToolTip(bool RequestTrash=true); ///< Release the previously displayed user tooltip widget. Trashing is optional.
+  //@}
 
   virtual bool IsKeyDown (nglKeyCode Key) const;
 
@@ -187,6 +194,12 @@ protected:
   nuiWidgetPtr mpToolTipSource;
   nuiToolTip* mpToolTipLabel;
 #endif
+  
+  // User ToolTips:
+  bool mDisplayUserToolTip;
+  nuiWidgetPtr mpUserToolTipHolder;   ///< The widget holding the user tooltip widget.
+  nuiWidgetPtr mpUserToolTipWidget;   ///< The actual usertooltip widget, held by 'mpUserToolTipHolder'
+  
   nuiLabel* mpInfoLabel;
 
   nuiWidget* mpDragFeedback;

@@ -337,12 +337,18 @@ public:
   //@}
 
 
-  /** @name Generic tooltips */
+  /** @name Generic text tooltips */
   //@{
   bool SetToolTip(const nglString& rToolTip); ///< Change the text of the tooltip.
   nglString GetToolTip() const; ///< Retrieve the text of the tooltip.
   virtual bool ActivateToolTip(nuiWidgetPtr pWidget, bool Now = false); ///< The user doesn't need to use this method directly.
   virtual bool ReleaseToolTip(nuiWidgetPtr pWidget); ///< Tell the system to stop displaying this object's tooltip.
+  //@}
+  
+  /** @name User tooltip widget */
+  //@{
+  virtual bool ActivateUserToolTip(nuiWidgetPtr pTooltipWidget);///< Tell the system to display the tooltip widget
+  virtual bool ReleaseUserToolTip(); ///< Tell the system to stop displaying the tooltip widget
   //@}
 
   /** @name Drag and drop */

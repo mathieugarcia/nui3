@@ -112,7 +112,9 @@ bool nuiSimpleContainer::LoadChildren(const nuiXMLNode* pNode)
 nuiSimpleContainer::~nuiSimpleContainer()
 {
   CheckValid();
+  NGL_ASSERT(GetChildrenCount() == 0);
   // Delete all children:
+  
   IteratorPtr pIt;
   for (pIt = GetFirstChild(false); pIt && pIt->IsValid(); GetNextChild(pIt))
   {
@@ -198,17 +200,13 @@ bool nuiSimpleContainer::DelChild(nuiWidgetPtr pChild)
   {
     if (*it == pChild)
     {
-      mpChildren.erase(it);
-      if (!pChild->IsTrashed())
+      if (!pChild->IsTrashed(false)) ///< DelChild was called directly
       {
-        nuiTopLevel* pRoot = GetTopLevel();
-        pChild->Trashed();
-        Invalidate();
-        
-        if (pRoot)
-          pRoot->AdviseObjectDeath(pChild);
-        pChild->SetParent(NULL);
+        return pChild->Trash(); ///< This will call this->DelChild(pChild) again, but with pChild as Trashed.
       }
+
+      mpChildren.erase(it);
+      pChild->SetParent(NULL);
       ChildDeleted(this, pChild);
       InvalidateLayout();
       DebugRefreshInfo();

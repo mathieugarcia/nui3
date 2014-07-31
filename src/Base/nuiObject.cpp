@@ -15,6 +15,7 @@ using namespace std;
 nuiObject::nuiObject()
 : mpTrace(NULL)
 {
+//  printf("+ nuiObject::CTOR() %p\n", this);
   nglString name;
   name.CFormat("%d", this);
   Init(name);
@@ -23,6 +24,7 @@ nuiObject::nuiObject()
 nuiObject::nuiObject(const nglString& rObjectName)
 : mpTrace(NULL)
 {
+//  printf("+ nuiObject::CTOR() %p\n", this);
   Init(rObjectName);
 }
 
@@ -93,6 +95,7 @@ nuiSerializeMode nuiObject::GetSerializeMode () const
 
 nuiObject::~nuiObject()
 {
+//  printf("- nuiObject::DTOR() %p\n", this);
   CheckValid();
 #ifdef _NUI_DEBUG_OBJECTS_
   NGL_LOG("nuiObject", NGL_LOG_DEBUG, "Deleting object '%s' (class='%s')\n", GetObjectName().GetChars(), GetObjectClass().GetChars());

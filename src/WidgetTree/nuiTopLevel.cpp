@@ -176,6 +176,9 @@ nuiTopLevel::nuiTopLevel(const nglPath& rResPath)
     mToolTipTimerOn(0.5f),
     mToolTipTimerOff(5.0f),
 #endif
+    mDisplayUserToolTip(false),
+    mpUserToolTipHolder(NULL),
+    mpUserToolTipWidget(NULL),
     mpDragFeedback(NULL),
     mpWatchedWidget(NULL),
     mFillTrash(false),
@@ -246,6 +249,11 @@ void nuiTopLevel::Exit()
   mpToolTipSource = NULL;
   mpToolTipLabel = NULL;
 #endif
+  
+  mDisplayUserToolTip = false;
+  mpUserToolTipHolder = NULL;
+  mpUserToolTipWidget = NULL;
+  
   mpGrab.clear();
   mpGrabAcquired.clear();
   mpFocus = NULL;
@@ -335,6 +343,12 @@ void nuiTopLevel::AdviseObjectDeath(nuiWidgetPtr pWidget)
   if (mpToolTipSource == pWidget)
     ReleaseToolTip(pWidget);
 #endif
+  
+  // If either the tooltip widget, or its holder, are trashed, release them.
+  if (mpUserToolTipWidget == pWidget || mpUserToolTipHolder == pWidget)
+  {
+    ReleaseUserToolTip(mpUserToolTipHolder == pWidget); // Only trash tooltip widget when holder is currently being trashed
+  }
 
   mCSSWidgets.erase(pWidget);
   
@@ -788,6 +802,70 @@ void nuiTopLevel::ToolTipOff(const nuiEvent& rEvent)
   mpToolTipLabel->Invalidate();
 }
 #endif
+
+
+bool nuiTopLevel::ActivateUserToolTip(nuiWidgetPtr pHolderWidget, nuiWidgetPtr pTooltipWidget)
+{
+  if (pHolderWidget == NULL || pTooltipWidget == NULL)
+  {
+    NGL_ASSERT(pHolderWidget != NULL);
+    NGL_ASSERT(pTooltipWidget != NULL);
+    return false;
+  }
+  
+  // Only allow one user tooltip widget to be displayed. Release it now.
+  if (mpUserToolTipHolder != NULL && mpUserToolTipWidget != NULL)
+  {
+    ReleaseUserToolTip(true); // Release and trash
+  }
+  
+  CheckValid();
+  
+  // Save holder and widget for later checks.
+  mpUserToolTipHolder = pHolderWidget;
+  mpUserToolTipWidget = pTooltipWidget;
+  
+  // Add widget in the tree
+  AddChild(pTooltipWidget);
+  
+  // We want to display the tooltip
+  mDisplayUserToolTip = true;
+  
+  // Apply CSS to our recently added tooltip widget
+  UpdateWidgetsCSS();
+  
+  // Display
+  UpdateLayout();
+  
+  return true;
+}
+
+bool nuiTopLevel::ReleaseUserToolTip(bool RequestTrash)
+{
+  CheckValid();
+  
+  // Sanity checks -- This should never assert
+  if (mpUserToolTipHolder == NULL || mpUserToolTipWidget == NULL)
+  {
+    NGL_ASSERT(mpUserToolTipHolder != NULL);
+    NGL_ASSERT(mpUserToolTipWidget != NULL);
+    return false;
+  }
+  
+  // Trash widget accordingly
+  if (RequestTrash)
+  {
+    NGL_ASSERT(!mpUserToolTipWidget->IsTrashed());
+    mpUserToolTipWidget->Trash();
+  }
+  
+  // Nullify pointers and stop displaying tooltip.
+  mpUserToolTipHolder = NULL;
+  mpUserToolTipWidget = NULL;
+  mDisplayUserToolTip = false;
+    
+  return true;
+}
 
 bool nuiTopLevel::IsKeyDown (nglKeyCode Key) const
 {
@@ -1890,6 +1968,7 @@ bool nuiTopLevel::Draw(class nuiDrawContext *pContext)
         && pItem != mpToolTipLabel
 #endif
         && pItem != mpDragFeedback
+        && pItem != mpUserToolTipWidget
         )
       DrawChild(pContext, pItem);
   }
@@ -1898,6 +1977,11 @@ bool nuiTopLevel::Draw(class nuiDrawContext *pContext)
 #ifndef DISABLE_TOOLTIP
   DisplayToolTips(pContext);
 #endif
+  
+  if (mpUserToolTipWidget != NULL && mDisplayUserToolTip)
+  {
+    DrawChild(pContext, mpUserToolTipWidget);
+  }
 
   if (mpDragFeedback)
     DrawChild(pContext, mpDragFeedback);
@@ -2106,7 +2190,7 @@ bool nuiTopLevel::SetRect(const nuiRect& rRect)
 #ifndef DISABLE_TOOLTIP
     if (pItem != mpToolTipLabel)
 #endif
-    if (pItem != mpDragFeedback)
+    if (pItem != mpDragFeedback && pItem != mpUserToolTipWidget)
     {
       pItem->GetIdealRect();
       if (pItem->GetProperty("Layout").ToLower() == "fullscreen")
@@ -2120,6 +2204,13 @@ bool nuiTopLevel::SetRect(const nuiRect& rRect)
 #ifndef DISABLE_TOOLTIP
   SetToolTipRect();
 #endif
+  
+  if (mpUserToolTipWidget != NULL && mDisplayUserToolTip)
+  {
+    mpUserToolTipWidget->GetIdealRect();
+    mpUserToolTipWidget->SetLayout(rectfull);
+  }
+  
 //  if (mpDragFeedback)
 //  {
 //    nglMouseInfo mouse;
