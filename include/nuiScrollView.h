@@ -38,6 +38,8 @@ public:
   virtual bool MouseMoved(const nglMouseInfo& rInfo);
   virtual bool MouseWheelMoved(const nglMouseInfo& rInfo);
   virtual bool MouseCanceled(const nglMouseInfo& rInfo);
+  bool MouseGrabbed(nglTouchId Id);
+  bool MouseUngrabbed(nglTouchId Id);
 
   void Dragged(const nglMouseInfo& rInfo);
 

@@ -796,7 +796,7 @@ bool nuiScrollView::MouseClicked(const nglMouseInfo& rInfo)
   }
   else if (rInfo.Buttons & nglMouseInfo::ButtonLeft && mDragEnabled && !mLeftClick)
   {
-    mLeftClick++;
+//    mLeftClick++;
 //    NGL_OUT("nuiScrollView::MouseClicked LeftClick: %d\n", mLeftClick);
     mTimerOn = false;
     mSpeedX = 0;
@@ -830,10 +830,10 @@ bool nuiScrollView::MouseUnclicked(const nglMouseInfo& rInfo)
     return false;
 
   Dragged(rInfo);
-  mLeftClick--;
+//  mLeftClick--;
 //  NGL_OUT("nuiScrollView::MouseUnclicked LeftClick: %d\n", mLeftClick);
 
-  if (!mLeftClick)
+  if (mLeftClick == 1) ///< will be ungrabbed
   {
     nglTime now;
     double elapsed = now.GetValue() - mLastTime.GetValue();
@@ -964,7 +964,8 @@ void nuiScrollView::Dragged(const nglMouseInfo& rInfo)
 
 bool nuiScrollView::MouseCanceled(const nglMouseInfo& rInfo)
 {
-  mLeftClick--;
+  mLeftClick = 0;
+//  mLeftClick--;
 //  NGL_OUT("nuiScrollView::MouseCanceled LeftClick: %d\n", mLeftClick);
 }
 
@@ -1394,4 +1395,24 @@ bool nuiScrollView::PreMouseMoved(const nglMouseInfo& rInfo)
     }
   }
   return false;
+}
+
+bool nuiScrollView::MouseGrabbed(nglTouchId Id)
+{
+  mLeftClick++;
+  return true;
+}
+
+bool nuiScrollView::MouseUngrabbed(nglTouchId Id)
+{
+  if (!HasGrab(Id))
+    return false;
+  NGL_ASSERT(mLeftClick > 0);
+  mLeftClick--;
+  if (!mLeftClick)
+  {
+  
+  }
+
+  return true;
 }

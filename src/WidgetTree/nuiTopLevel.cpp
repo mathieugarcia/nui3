@@ -567,7 +567,7 @@ NGL_TOUCHES_DEBUG( NGL_OUT(_T("CancelGrab()\n")) );
     nglTouchId touchId = it->first;
     nuiWidget* pGrab = it->second;
 
-    while (pGrab)
+    if (pGrab)
     {
 #ifndef DISABLE_TOOLTIP
       if (pGrab->GetProperty("ToolTipOnGrab") == _T("true"))
@@ -604,6 +604,7 @@ bool nuiTopLevel::StealMouseEvent(nuiWidgetPtr pWidget, const nglMouseInfo& rInf
     {
       return false;
     }
+//    oldgrab->MouseUngrabbed(rInfo.TouchId);
   }
   
 //  if (oldgrab && oldgrab != pWidget)
@@ -611,17 +612,22 @@ bool nuiTopLevel::StealMouseEvent(nuiWidgetPtr pWidget, const nglMouseInfo& rInf
 //    NGL_TOUCHES_DEBUG( NGL_OUT("cancel touch on oldgrab = %p\n", oldgrab));
 //    oldgrab->MouseCanceled(rInfo);
 //  }
-  if (!DispatchMouseCanceled(pWidget, rInfo))
-    return false;
+
+//  if (!DispatchMouseCanceled(pWidget, rInfo))
+//    return false;
 
   NGL_TOUCHES_DEBUG( NGL_OUT("Accepted Grab requested by %s %s (%p)\n", pWidget->GetObjectClass().GetChars(), pWidget->GetObjectName().GetChars(), pWidget));
 //  pWidget->DispatchMouseCanceled(pWidget, rInfo);
   pWidget->MouseClicked(rInfo);
 
-  mpGrab[rInfo.TouchId] = pWidget;
-  mpGrabAcquired[rInfo.TouchId] = true;
-  NGL_TOUCHES_DEBUG( NGL_OUT("Grabs %d - %d\n", (uint32)mpGrabAcquired.size(), (uint32)mpGrab.size()));
-  UpdateWidgetsCSS();
+  Grab(pWidget);
+  
+//  mpGrab[rInfo.TouchId] = pWidget;
+//  mpGrabAcquired[rInfo.TouchId] = true;
+//  NGL_TOUCHES_DEBUG( NGL_OUT("Grabs %d - %d\n", (uint32)mpGrabAcquired.size(), (uint32)mpGrab.size()));
+////  pWidget->MouseGrabbed(rInfo.TouchId);
+//  
+//  UpdateWidgetsCSS();
   return true;
 }
 
