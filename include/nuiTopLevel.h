@@ -98,7 +98,9 @@ public:
   //@{
   ///< Tells the system to display the user tooltip widget 'pTooltipWidget', held by 'pHolderWidget'
   virtual bool ActivateUserToolTip(nuiWidgetPtr pHolderWidget, nuiWidgetPtr pTooltipWidget);
-  virtual bool ReleaseUserToolTip(bool RequestTrash=true); ///< Release the previously displayed user tooltip widget. Trashing is optional.
+  virtual bool ReleaseUserToolTip(nuiWidgetPtr pHolderWidget, bool RequestTrash=true); ///< Release the previously displayed user tooltip widget held by 'pHolderWidget'. Trashing is optional.
+  inline nuiWidgetPtr GetUserToolTipWidget() { return mpUserToolTipWidget; }
+  inline nuiWidgetPtr GetUserToolTipHolder() { return mpUserToolTipHolder; }
   //@}
 
   virtual bool IsKeyDown (nglKeyCode Key) const;

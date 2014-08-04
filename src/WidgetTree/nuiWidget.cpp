@@ -2900,7 +2900,7 @@ bool nuiWidget::ReleaseUserToolTip()
   NGL_ASSERT(pRoot);
   if (pRoot)
   {
-    bool res = pRoot->ReleaseUserToolTip(true); // Widget will be trashed by top level
+    bool res = pRoot->ReleaseUserToolTip(this, true); // Widget will be trashed by top level
     return res;
   }
   return false;

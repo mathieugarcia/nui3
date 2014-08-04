@@ -347,7 +347,7 @@ void nuiTopLevel::AdviseObjectDeath(nuiWidgetPtr pWidget)
   // If either the tooltip widget, or its holder, are trashed, release them.
   if (mpUserToolTipWidget == pWidget || mpUserToolTipHolder == pWidget)
   {
-    ReleaseUserToolTip(mpUserToolTipHolder == pWidget); // Only trash tooltip widget when holder is currently being trashed
+    ReleaseUserToolTip(mpUserToolTipHolder, mpUserToolTipHolder == pWidget); // Only trash tooltip widget when holder is currently being trashed
   }
 
   mCSSWidgets.erase(pWidget);
@@ -822,7 +822,7 @@ bool nuiTopLevel::ActivateUserToolTip(nuiWidgetPtr pHolderWidget, nuiWidgetPtr p
   // Only allow one user tooltip widget to be displayed. Release it now.
   if (mpUserToolTipHolder != NULL && mpUserToolTipWidget != NULL)
   {
-    ReleaseUserToolTip(true); // Release and trash
+    ReleaseUserToolTip(mpUserToolTipHolder, true); // Release and trash
   }
   
   CheckValid();
@@ -846,7 +846,7 @@ bool nuiTopLevel::ActivateUserToolTip(nuiWidgetPtr pHolderWidget, nuiWidgetPtr p
   return true;
 }
 
-bool nuiTopLevel::ReleaseUserToolTip(bool RequestTrash)
+bool nuiTopLevel::ReleaseUserToolTip(nuiWidgetPtr pHolderWidget, bool RequestTrash)
 {
   CheckValid();
   
@@ -855,6 +855,11 @@ bool nuiTopLevel::ReleaseUserToolTip(bool RequestTrash)
   {
     NGL_ASSERT(mpUserToolTipHolder != NULL);
     NGL_ASSERT(mpUserToolTipWidget != NULL);
+    return false;
+  }
+  
+  if (pHolderWidget != mpUserToolTipHolder)
+  {
     return false;
   }
   
