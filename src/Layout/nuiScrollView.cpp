@@ -250,12 +250,12 @@ nuiRect nuiScrollView::CalcIdealSize()
                rect.GetHeight() + (mpVertical && !mVerticalIsExternal && !mForceNoVertical && !mHideScrollBars ? mBarSize : 0));
   mIdealRect = rect;
 
-  #ifdef _DEBUG_LAYOUT
-  if (GetDebug())
-  {
+//  #ifdef _DEBUG_LAYOUT
+//  if (GetDebug())
+//  {
     NGL_OUT(_T("nuiScrollView::CalcIdealSize: %s\n"), mIdealRect.GetValue().GetChars());
-  }
-  #endif
+//  }
+//  #endif
   
   return mIdealRect;
 }
@@ -442,12 +442,12 @@ bool nuiScrollView::SetRect(const nuiRect& rRect)
 
 bool nuiScrollView::SetChildrenRect(nuiSize x, nuiSize y, nuiSize xx, nuiSize yy, nuiSize scrollv, nuiSize scrollh)
 {  
-  #ifdef _DEBUG_LAYOUT
-  if (GetDebug())
-  {
+//  #ifdef _DEBUG_LAYOUT
+//  if (GetDebug())
+//  {
     NGL_OUT(_T("\tnuiScrollView::SetChildrenRect: (%f, %f) (%f, %f) - (%f, %f)\n"), x, y, xx, yy, scrollv, scrollh);
-  }
-  #endif
+//  }
+//  #endif
   
   nuiRect VisibleRect = GetRect().Size();
   VisibleRect.Right() -= scrollv;
