@@ -475,12 +475,17 @@ bool nuiTopLevel::DispatchHasGrab(nuiWidgetPtr pWidget, nglTouchId TouchId)
 
 bool nuiTopLevel::Grab(nuiWidgetPtr pWidget)
 {
+  return Grab(pWidget, mMouseInfo);
+}
+
+bool nuiTopLevel::Grab(nuiWidgetPtr pWidget, const nglMouseInfo& rInfo)
+{
   nuiAutoRef;
   CheckValid();
   NGL_TOUCHES_DEBUG( NGL_OUT(_T("nuiTopLevel::Grab 0x%x\n"), pWidget) );
 
 ///< some widgets acquire the grab on creation, which is pretty unpleasant (this hack is quite bad)
-  nglTouchId touchId = mMouseInfo.TouchId;
+  nglTouchId touchId = rInfo.TouchId;
   if (touchId < 0)
   {
     return false;
@@ -490,7 +495,7 @@ bool nuiTopLevel::Grab(nuiWidgetPtr pWidget)
       && HasGrab(pWidget))
   {
 
-  NGL_TOUCHES_DEBUG( NGL_OUT(_T("TouchId[%d] "), mMouseInfo.TouchId) );
+  NGL_TOUCHES_DEBUG( NGL_OUT(_T("TouchId[%d] "), rInfo.TouchId) );
   NGL_TOUCHES_DEBUG( NGL_OUT(_T("%s of type %s already grabbed from other touch(es)\n"), 
           pWidget->GetObjectName().GetChars(),
           pWidget->GetObjectClass().GetChars()) );
@@ -499,7 +504,7 @@ bool nuiTopLevel::Grab(nuiWidgetPtr pWidget)
   }
   if (pWidget)
   {
-    NGL_TOUCHES_DEBUG( NGL_OUT(_T("TouchId[%d] "), mMouseInfo.TouchId) );
+    NGL_TOUCHES_DEBUG( NGL_OUT(_T("TouchId[%d] "), rInfo.TouchId) );
     NGL_TOUCHES_DEBUG( NGL_OUT(_T("Grab from %s of type %s\n"),
             pWidget->GetObjectName().GetChars(), pWidget->GetObjectClass().GetChars()) );
   }
@@ -533,17 +538,22 @@ bool nuiTopLevel::Grab(nuiWidgetPtr pWidget)
 
 bool nuiTopLevel::Ungrab(nuiWidgetPtr pWidget)
 {
+  return Ungrab(pWidget, mMouseInfo);
+}
+
+bool nuiTopLevel::Ungrab(nuiWidgetPtr pWidget, const nglMouseInfo& rInfo)
+{
   nuiAutoRef;
   CheckValid();
   NGL_TOUCHES_DEBUG( NGL_OUT(_T("nuiTopLevel::Ungrab 0x%x\n"), pWidget) );
   if (pWidget)
   {
-  //  NGL_TOUCHES_DEBUG( NGL_OUT(_T("TouchId[%d] "), mMouseInfo.TouchId) );
+  //  NGL_TOUCHES_DEBUG( NGL_OUT(_T("TouchId[%d] "), rInfo.TouchId) );
     NGL_TOUCHES_DEBUG( NGL_OUT(_T("Ungrab from %s of type %s\n"), pWidget->GetObjectName().GetChars(), pWidget->GetObjectClass().GetChars()) );
   }
 
 #ifndef DISABLE_TOOLTIP
-  nuiWidgetPtr pGrab = GetGrab();
+  nuiWidgetPtr pGrab = GetGrab(rInfo.TouchId);
   if (pGrab && pGrab->GetProperty("ToolTipOnGrab") == _T("true"))
   {
     mpToolTipSource = NULL;
@@ -551,7 +561,7 @@ bool nuiTopLevel::Ungrab(nuiWidgetPtr pWidget)
   }
 #endif
 
-  Grab(NULL);
+  Grab(NULL, rInfo);
 
   UpdateWidgetsCSS();
   return true;
@@ -605,6 +615,7 @@ bool nuiTopLevel::StealMouseEvent(nuiWidgetPtr pWidget, const nglMouseInfo& rInf
       return false;
     }
 //    oldgrab->MouseUngrabbed(rInfo.TouchId);
+//    mpGrab[rInfo.TouchId] = nullptr;
   }
   
 //  if (oldgrab && oldgrab != pWidget)
@@ -620,7 +631,7 @@ bool nuiTopLevel::StealMouseEvent(nuiWidgetPtr pWidget, const nglMouseInfo& rInf
 //  pWidget->DispatchMouseCanceled(pWidget, rInfo);
   pWidget->MouseClicked(rInfo);
 
-  Grab(pWidget);
+  Grab(pWidget, rInfo);
   
 //  mpGrab[rInfo.TouchId] = pWidget;
 //  mpGrabAcquired[rInfo.TouchId] = true;
