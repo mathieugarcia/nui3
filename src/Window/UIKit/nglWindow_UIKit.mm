@@ -42,6 +42,8 @@ const nglChar* gpWindowErrorTable[] =
 
 //#define _DEBUG_WINDOW_
 
+static bool gNeedInvalidate = false;
+
 @interface RetainedEAGLLayer : CAEAGLLayer
 @end
 
@@ -68,11 +70,20 @@ const nglChar* gpWindowErrorTable[] =
 
 @interface RetainedGLKView : GLKView
 @end
-
 @implementation RetainedGLKView
 + (Class)layerClass
 {
   return [RetainedEAGLLayer class];
+}
+- (void)didAddSubview:(UIView *)subview
+{
+  [super didAddSubview:subview];
+  gNeedInvalidate = true;
+}
+- (void)willRemoveSubview:(UIView *)subview
+{
+  [super willRemoveSubview:subview];
+  gNeedInvalidate = true;
 }
 @end
 
@@ -92,7 +103,8 @@ const nglChar* gpWindowErrorTable[] =
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-  return YES; //(interfaceOrientation == UIInterfaceOrientationLandscapeRight) || (interfaceOrientation == UIInterfaceOrientationLandscapeLeft);
+  return (interfaceOrientation == UIInterfaceOrientationLandscapeRight) || (interfaceOrientation == UIInterfaceOrientationLandscapeLeft);
+//  return YES; //(interfaceOrientation == UIInterfaceOrientationLandscapeRight) || (interfaceOrientation == UIInterfaceOrientationLandscapeLeft);
 }
 
 -(BOOL)shouldAutorotate
@@ -102,7 +114,8 @@ const nglChar* gpWindowErrorTable[] =
 
 -(NSUInteger)supportedInterfaceOrientations
 {
-  NSInteger mask = UIInterfaceOrientationMaskAll;
+//  NSInteger mask = UIInterfaceOrientationMaskAll;
+  NSInteger mask = UIInterfaceOrientationMaskLandscape;
   return mask;
 
 }
@@ -228,14 +241,13 @@ const nglChar* gpWindowErrorTable[] =
     mpNGLWindow->CallOnCreation();
   }
 
-  static int32 counter = 0;
-  if (counter)
-  {
-    counter--;
-    return;
-  }
-  
-  counter = 60;
+//  static int32 counter = 0;
+//  if (counter)
+//  {
+//    counter--;
+//    return;
+//  }
+//  counter = 60;
 }
 
 - (void) dumpTouch: (UITouch*) pTouch
@@ -280,6 +292,19 @@ const nglChar* gpWindowErrorTable[] =
   }
 }
 
+//! From GLKViewControllerDelegate
+- (void)glkViewControllerUpdate:(GLKViewController *)controller
+{
+  if (gNeedInvalidate)
+    mpNGLWindow->OnInvalidate();
+  {
+    GLKViewController* ctrl = (GLKViewController*)self.rootViewController;
+    double lap = ctrl.timeSinceLastDraw;
+    mpTimer->OnTick(lap);
+  }
+}
+
+//! From GLKViewDelegate
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
   if (!CGRectEqualToRect(oldrect, rect))
@@ -294,12 +319,7 @@ const nglChar* gpWindowErrorTable[] =
 - (void)Paint
 {
   [self InitNGLWindow];
-
-  {
-    GLKViewController* ctrl = (GLKViewController*)self.rootViewController;
-    double lap = ctrl.timeSinceLastDraw;
-    mpTimer->OnTick(lap);
-  }
+  mpNGLWindow->OnPaint();
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event

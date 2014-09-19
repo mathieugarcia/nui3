@@ -597,6 +597,11 @@ window = new nglWindow (context, info, NULL);
     signal the holders of a pointer to this object that it is no longer
     available.
   */
+  virtual void OnInvalidate() {}
+  /*!<
+   This method is used whenever a particular implementation requires a full redraw
+   */
+
   virtual void OnPaint();
   /*!<
     At least a part of the window must be redrawn. The window might have been

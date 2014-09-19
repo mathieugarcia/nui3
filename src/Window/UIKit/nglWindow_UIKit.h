@@ -8,20 +8,11 @@
 #import <OpenGLES/ES2/glext.h>
 #import <GLKit/GLKit.h>
 
+
+
 /*
-** Touches tracking ..
-*/
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class nglTouchInfo ///< Touch info
-{
-public:
-  UITouch* mpUITouch;
-  nglTouchId mTouchId;
-  int X, Y;
-};
-
-typedef std::map<UITouch*,nglTouchInfo> TouchesInfo;
+ ** GLKViewController
+ */
 
 @interface NGLViewController : GLKViewController
 {
@@ -37,7 +28,7 @@ typedef std::map<UITouch*,nglTouchInfo> TouchesInfo;
 /*
 ** nglUIWindow
 */
-@interface nglUIWindow : UIWindow<UITextFieldDelegate, GLKViewDelegate>
+@interface nglUIWindow : UIWindow<UITextFieldDelegate, GLKViewDelegate, GLKViewControllerDelegate>
 {
   nglWindow*    mpNGLWindow;
   nglContextInfo* mpContextInfo;

@@ -231,6 +231,7 @@ private:
     /* @name Inheritance from nglWindow */
     //@{
     virtual void OnPaint();
+    virtual void OnInvalidate();
     virtual void OnResize (uint Width, uint Height);
     virtual void OnCreation();
     virtual void OnDestruction();
