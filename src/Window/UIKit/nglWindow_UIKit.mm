@@ -160,7 +160,7 @@ static bool gNeedInvalidate = false;
   NGLViewController* ctrl = [[NGLViewController alloc] initWithNGLWindow:mpNGLWindow];
   ctrl.view = mpGLKView;
   ctrl.preferredFramesPerSecond = 60;
-
+  ctrl.delegate = self;
   [self setRootViewController:ctrl];
 
   [mpGLKView bindDrawable];
@@ -296,12 +296,14 @@ static bool gNeedInvalidate = false;
 - (void)glkViewControllerUpdate:(GLKViewController *)controller
 {
   if (gNeedInvalidate)
-    mpNGLWindow->OnInvalidate();
   {
-    GLKViewController* ctrl = (GLKViewController*)self.rootViewController;
-    double lap = ctrl.timeSinceLastDraw;
-    mpTimer->OnTick(lap);
+    mpNGLWindow->OnInvalidate();
+    gNeedInvalidate=false;
   }
+
+  GLKViewController* ctrl = (GLKViewController*)self.rootViewController;
+  double lap = ctrl.timeSinceLastDraw;
+  mpTimer->OnTick(lap);
 }
 
 //! From GLKViewDelegate
