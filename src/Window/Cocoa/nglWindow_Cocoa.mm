@@ -759,11 +759,12 @@ NSString *kPrivateDragUTI = @"com.libnui.privatepasteboardtype";
   mLastPaintTime = now;
   mpTimer->OnTick(lap);
 
+  mpNGLWindow->CallOnPaint();
+
   if (mInvalidated)
   {
     mInvalidated = false;
     [self display];
-    //mpNGLWindow->CallOnPaint();
   }
 }
 
