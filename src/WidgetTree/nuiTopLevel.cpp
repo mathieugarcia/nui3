@@ -509,7 +509,7 @@ bool nuiTopLevel::Grab(nuiWidgetPtr pWidget, const nglMouseInfo& rInfo)
             pWidget->GetObjectName().GetChars(), pWidget->GetObjectClass().GetChars()) );
   }
 
-  nuiWidgetPtr pGrab = GetGrab();
+  nuiWidgetPtr pGrab = GetGrab(touchId);
   
   if (pGrab)
   {
