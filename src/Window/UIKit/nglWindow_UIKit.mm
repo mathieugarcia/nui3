@@ -923,7 +923,10 @@ int nglWindow::GetStatusBarSize() const
 {
   if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1)
   {
-    return MIN([UIApplication sharedApplication].statusBarFrame.size.height, [UIApplication sharedApplication].statusBarFrame.size.width);
+//    if ([UIApplication sharedApplication].isStatusBarHidden)
+//      return 0;
+//    return MIN([UIApplication sharedApplication].statusBarFrame.size.height, [UIApplication sharedApplication].statusBarFrame.size.width);
+    return 0;
   }
   return 0;
 }
