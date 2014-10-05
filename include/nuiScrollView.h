@@ -146,8 +146,8 @@ private:
   int mLeftClick;
   double mClickValueH;
   double mClickValueV;
-  nuiSize mSpeedX;
-  nuiSize mSpeedY;
+  double mSpeedX;
+  double mSpeedY;
   nuiSize mLastX;
   nuiSize mLastY;
   

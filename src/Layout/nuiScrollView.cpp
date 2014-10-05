@@ -13,7 +13,9 @@
 //#define INERTIA_SPEED 2400
 #define INERTIA_SPEED 0.8
 #define INITIAL_BRAKES 0.5
-#define INERTIA_BRAKES 0.98
+#define INERTIA_BRAKES 0.95
+#define INERTIA_OFFSET_BRAKES 0.5
+
 #define EXTRA_OUT_SIZE_RATIO 0.5
 
 #ifdef DEBUG
@@ -250,12 +252,12 @@ nuiRect nuiScrollView::CalcIdealSize()
                rect.GetHeight() + (mpVertical && !mVerticalIsExternal && !mForceNoVertical && !mHideScrollBars ? mBarSize : 0));
   mIdealRect = rect;
 
-//  #ifdef _DEBUG_LAYOUT
-//  if (GetDebug())
-//  {
+#ifdef _DEBUG_LAYOUT
+  if (GetDebug())
+  {
     NGL_OUT(_T("nuiScrollView::CalcIdealSize: %s\n"), mIdealRect.GetValue().GetChars());
-//  }
-//  #endif
+  }
+#endif
   
   return mIdealRect;
 }
@@ -294,6 +296,7 @@ bool nuiScrollView::SetRect(const nuiRect& rRect)
   XOffset = (nuiSize)ToNearest(XOffset);
   YOffset = (nuiSize)ToNearest(YOffset);
 
+//  printf("SetRect YOffset %f\n", YOffset);
   GetIdealRect();
   nuiRect rIdealRect(mChildrenUnionRect); ///< needed because GetIdealRect may return a UserRect
   
@@ -445,7 +448,7 @@ bool nuiScrollView::SetChildrenRect(nuiSize x, nuiSize y, nuiSize xx, nuiSize yy
 //  #ifdef _DEBUG_LAYOUT
 //  if (GetDebug())
 //  {
-    NGL_OUT(_T("\tnuiScrollView::SetChildrenRect: (%f, %f) (%f, %f) - (%f, %f)\n"), x, y, xx, yy, scrollv, scrollh);
+//    NGL_OUT(_T("\tnuiScrollView::SetChildrenRect: (%f, %f) (%f, %f) - (%f, %f)\n"), x, y, xx, yy, scrollv, scrollh);
 //  }
 //  #endif
   
@@ -460,7 +463,7 @@ bool nuiScrollView::SetChildrenRect(nuiSize x, nuiSize y, nuiSize xx, nuiSize yy
 
   if (mSmoothScrolling)
   {
-    if (mTimerOn)
+//    if (mTimerOn)
     {
       if (!mHThumbPressed)
         XOffset = mXOffset;
@@ -471,6 +474,7 @@ bool nuiScrollView::SetChildrenRect(nuiSize x, nuiSize y, nuiSize xx, nuiSize yy
 
   XOffset = (nuiSize)ToNearest(XOffset);
   YOffset = (nuiSize)ToNearest(YOffset);
+//  printf("SetChildrenRect YOffset %f\n", YOffset);
 
   if (!mFillChildren)
   {
@@ -864,27 +868,40 @@ bool nuiScrollView::MouseMoved(const nglMouseInfo& rInfo)
     return false;
   
   nglTime now;
-  float elapsed = now.GetValue() - mLastTime.GetValue();
+  double elapsed = now.GetValue() - mLastTime.GetValue();
+  elapsed = MAX(0.01, elapsed);
+//  float ratio = elapsed > 0.1 ? 0 : MIN(1, 1/elapsed);
+//  mSpeedX *= ratio;
+//  mSpeedY *= ratio;
+
+  double vectX = mLastX - rInfo.X;
+  double vectY = mLastY - rInfo.Y;
+//  nuiSize module = sqrt(vectX * vectX + vectY * vectY);
+//  module = 1;
+//  elapsed = 1;
+//  mSpeedX *= INITIAL_BRAKES;
+//  mSpeedY *= INITIAL_BRAKES;
+//  float tmpY = mSpeedY;
+//  float addX = vectX  * INERTIA_SPEED / elapsed;
+//  float addY = vectY * INERTIA_SPEED / elapsed;
+//  mSpeedX += addX;
+//  mSpeedY += addY;
+
+  double oldSpeedX = mSpeedX;
+  double oldSpeedY = mSpeedY;
   
-  nuiSize vectX = mLastX - rInfo.X;
-  nuiSize vectY = mLastY - rInfo.Y;
-  nuiSize module = sqrt(vectX * vectX + vectY * vectY);
-  module = 1;
-  elapsed = 1;
+  mSpeedX = vectX / elapsed;
+  mSpeedY = vectY / elapsed;
 
-  mSpeedX *= INITIAL_BRAKES;
-  mSpeedY *= INITIAL_BRAKES;
-  float tmpY = mSpeedY;
-  float addX = vectX  * INERTIA_SPEED / elapsed;
-  float addY = vectY * INERTIA_SPEED / elapsed;
-  mSpeedX += addX;
-  mSpeedY += addY;
-
-//  NGL_OUT("Scroll: %f = %f + %f * INERTIA / %f \n", mSpeedY, tmpY, vectY, elapsed);
+  double accelX = mSpeedX / oldSpeedX;
+  double accelY = mSpeedY / oldSpeedY;
+  
+//  NGL_OUT("Elapsed %f VectY %f SpeedY %f AccelY %f\n", elapsed, vectY, mSpeedY, accelY);
 
   mLastX = rInfo.X;
   mLastY = rInfo.Y;
   mLastTime = now;
+
   Dragged(rInfo);
   return true;
 }
@@ -1016,10 +1033,6 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
   mSpeedX *= INERTIA_BRAKES;
   mSpeedY *= INERTIA_BRAKES;
 
-//  const float SPRING_K = 0.5;
-//  if (mYOffset < 0)
-//    mSpeedY += -mYOffset * SPRING_K;
-
   const float MINSPEED = 0.1f;
   if (fabs(mSpeedX) < MINSPEED)
     mSpeedX = 0;
@@ -1030,54 +1043,71 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
   if (!mTimerOn)
     return;
 
+  const float XOffset = (float)mpHorizontal->GetRange().GetValue();
+  const float YOffset = (float)mpVertical->GetRange().GetValue();
+
   if (!mLeftClick)
   {
     mTimerOn = false;
+    nglTime now;
+    double elapsed = now.GetValue() - mLastTime.GetValue();
+    mLastTime = now;
 
-    float XOffset = (float)mpHorizontal->GetRange().GetValue();
-    float YOffset = (float)mpVertical->GetRange().GetValue();
-
+    bool isXOffsetting = (mXOffset < 0 || mXOffset > (GetIdealRect().GetWidth()-GetRect().GetWidth()));
+    if (isXOffsetting)
+      mSpeedX *= INERTIA_OFFSET_BRAKES;
+    
+    double speedX = (mSpeedX * elapsed);
     float xdiff = XOffset - mXOffset;
-    float ydiff = YOffset - mYOffset;
-
-//    printf("Timer: y diff: %.4f\tCurrent Pos: %.4f\tSpeed Y: %.4f\n", ydiff, mYOffset, mSpeedY);
-    if (::fabs(xdiff) < 1)
+    
+    if (std::fabs(speedX) > MINSPEED) ///< inertia
+    {
+      mXOffset += speedX;
+      SetXPos(mXOffset);
+      mTimerOn = true;
+    }
+    else if (std::fabs(xdiff) > 1) ///< smooth
+    {
+      xdiff *= NUI_SMOOTH_SCROLL_RATIO;
+      mXOffset += xdiff;
+      mSpeedX = 0;
+      mTimerOn = true;
+    }
+    else
     {
       xdiff = 0;
       mXOffset = XOffset;
+      mSpeedX = 0;
     }
-    else
+
+
+////////////////////
+
+    bool isYOffsetting = (mYOffset < 0 || mYOffset > (GetIdealRect().GetHeight()-GetRect().GetHeight()));
+    if (isYOffsetting)
+      mSpeedY *= INERTIA_OFFSET_BRAKES;
+
+    double speedY = (mSpeedY * elapsed);
+    float ydiff = YOffset - mYOffset;
+
+    if (std::fabs(speedY) > MINSPEED) ///< inertia
     {
-      if (mSmoothScrolling)
-        xdiff *= NUI_SMOOTH_SCROLL_RATIO;
+      mYOffset += speedY;
+      SetYPos(mYOffset);
       mTimerOn = true;
     }
-    mXOffset += xdiff;
-
-    if (::fabs(ydiff) < 1)
+    else if (std::fabs(ydiff) > 1) ///< smooth
+    {
+      ydiff *= NUI_SMOOTH_SCROLL_RATIO;
+      mYOffset += ydiff;
+      mSpeedY = 0;
+      mTimerOn = true;
+    }
+    else
     {
       ydiff = 0;
       mYOffset = YOffset;
-    }
-    else
-    {
-      if (mSmoothScrolling)
-        ydiff *= NUI_SMOOTH_SCROLL_RATIO;
-      mTimerOn = true;
-    }
-
-    mYOffset += ydiff;
-
-    if (mSpeedX != 0)
-    {
-      SetXPos(GetXPos() + mSpeedX);
-//      mXOffset = GetXPos();
-    }
-    
-    if (mSpeedY != 0)
-    {
-      SetYPos(GetYPos() + mSpeedY);
-//      mYOffset = GetYPos();
+      mSpeedY = 0;
     }
 
     if (mXOffset == XOffset && mYOffset == YOffset && mSpeedX == 0 && mSpeedY == 0)
@@ -1086,8 +1116,17 @@ void nuiScrollView::OnSmoothScrolling(const nuiEvent& rEvent)
     }
   }
 
+  if (!mTimerOn)
+  {
+    mSpeedX = 0;
+    mSpeedY = 0;
+    mXOffset = XOffset;
+    mYOffset = YOffset;
+  }
   
-  UpdateLayout();
+//  UpdateLayout();
+  SetRect(mRect);
+
   OffsetsChanged();
 }
 
@@ -1185,7 +1224,6 @@ void nuiScrollView::SetForceNoSmartScroll(bool set)
 {
   mForceNoSmartScroll = set;
 }
-
 bool nuiScrollView::GetForceNoSmartScroll(bool set) const
 {
   return mForceNoSmartScroll;
