@@ -848,6 +848,10 @@ bool nuiScrollView::MouseUnclicked(const nglMouseInfo& rInfo)
     }
     else
     {
+      if (mForceNoHorizontal)
+        mSpeedX = 0;
+      if (mForceNoVertical)
+        mSpeedY = 0;
       if (mSpeedX != 0 || mSpeedY != 0)
       {
         mTimerOn = true;
